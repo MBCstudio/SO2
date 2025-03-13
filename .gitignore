@@ -1,0 +1,9 @@
+cmake-build-debug/
+*.exe
+*.o
+*.obj
+*.log
+*.ninja*
+CMakeCache.txt
+CMakeFiles/
+Testing/

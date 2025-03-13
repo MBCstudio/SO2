@@ -1,0 +1,14 @@
+//
+// Created by cinek on 3/13/2025.
+//
+
+#ifndef DININGPHILOSOPHERS_PHILOSOPHERS_H
+#define DININGPHILOSOPHERS_PHILOSOPHERS_H
+
+
+class philosophers {
+
+};
+
+
+#endif //DININGPHILOSOPHERS_PHILOSOPHERS_H
