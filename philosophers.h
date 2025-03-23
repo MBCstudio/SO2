@@ -9,23 +9,25 @@
 #include <thread>
 #include <vector>
 
-#include <vector>
-#include <atomic>
+#include <mutex>
 #include <thread>
+#include <vector>
 
 class DiningPhilosophers {
 private:
     int num_philosophers;
-    std::vector<std::atomic<bool>> forks;  // Forks -> true if in use
-    std::atomic<int> eating_count;         // Track number of eating philosophers (efficiency)
+    std::vector<std::mutex> forks;
+    std::mutex eating_mutex;        // Mutex for securing eaters
+    int eating_count;               // Amount of eaters
+
+
 
 public:
     DiningPhilosophers(int n);
     void philosopher(int id, int max_bites);
     void think(int id);
-    void eat(int id);
+    void eat(int id, int eaters);
 };
-
 
 void start_dining(int num_philosophers, int bites_per_philosopher);
 

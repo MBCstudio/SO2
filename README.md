@@ -46,33 +46,36 @@ Projekt wykorzystuje **CMake** do konfiguracji i budowania kodu. Poniżej znajdu
 # Problem jedzących filozofów - Opis
 
 ## Opis problemu
-Problem jedzących filozofów to klasyczny problem synchronizacji w programowaniu współbieżnym, zaproponowany przez Edsgera Dijkstrę. Filozofów siedzą wokół okrągłego stołu i na przemian myśli oraz je. Każdy filozof ma do dyspozycji jeden widelec po swojej lewej stronie oraz jeden po prawej stronie. Aby móc jeść, filozof musi jednocześnie posiadać oba widelce. Problemem jest unikanie zakleszczenia (*deadlock*) oraz zagłodzenia (*starvation*) filozofów, gdyż wszyscy mogą próbować podnieść jeden widelec jednocześnie, blokując się nawzajem.
+Problem jedzących filozofów to klasyczny problem synchronizacji w programowaniu współbieżnym, zaproponowany przez Edsgera Dijkstrę. Filozofowie siedzi wokół okrągłego stołu, gdzie na przemian myślą i jedzą. Każdy filozof ma do dyspozycji dwa widelce: jeden po swojej lewej stronie i jeden po prawej stronie. Aby móc jeść, filozof musi jednocześnie zdobyć oba widelce.
+
+Problemem jest unikanie zakleszczenia (*deadlock*) oraz zagłodzenia (*starvation*) filozofów. Zakleszczenie może nastąpić, gdy każdy filozof podniesie jeden widelec i będzie czekać na drugi, blokując się nawzajem. Zagłodzenie natomiast występuje, gdy niektórzy filozofowie nigdy nie otrzymują obu widelców z powodu niesprawiedliwego dostępu do zasobów.
 
 ## Metoda rozwiązania – Ograniczenie liczby jedzących
-Aby uniknąć zakleszczenia, zastosowano mechanizm ograniczenia maksymalnej liczby jedzących filozofów w danym momencie. Ograniczenie to wynosi \( \lfloor N/2 \rfloor \), gdzie \( N \) to liczba filozofów. Filozof może rozpocząć jedzenie tylko wtedy, gdy nie przekroczy tej wartości.
+Aby uniknąć zakleszczenia, wprowadzono ograniczenie maksymalnej liczby jedzących filozofów w danym momencie do \( \lfloor N/2 \rfloor \), gdzie \( N \) to liczba filozofów. Oznacza to, że jednocześnie jeść może najwyżej połowa filozofów.
 
-Każdy filozof próbuje podnieść dwa widelce atomowo, korzystając z operacji wymiany (*exchange*) na zmiennych atomowych, aby uniknąć konfliktów. Jeśli uda mu się zdobyć oba widelce, zaczyna jedzenie, a następnie je odkłada. W przeciwnym razie zwalnia zasoby i ponawia próbę po losowym czasie oczekiwania.
+Każdy filozof podejmuje próbę podniesienia obu widelców w losowej kolejności, co zmniejsza prawdopodobieństwo zakleszczenia. Jeśli nie uda mu się zdobyć obu widelców, zwalnia zajęty zasób i ponawia próbę po losowym czasie oczekiwania. 
 
 ## Wejście programu
 Program przyjmuje na wejściu:
 - **Liczbę filozofów (N)**
-- **Liczbę ugryzień potrzebnych do zakończenia (M)** – moment, gdy filozof uzyska oba widelce i spożyje posiłek M razy
+- **Liczbę ugryzień na filozofa (M)** – liczba posiłków, które każdy filozof musi spożyć przed zakończeniem programu
 
 ## Warunek zakończenia
-Program kończy działanie, gdy każdy filozof zje swoją ustaloną liczbę razy (M). W trakcie działania mechanizm ograniczenia liczby jedzących zapobiega blokadzie systemu oraz zagłodzeniu filozofów.
+Program zakończy działanie, gdy każdy filozof spożyje zadaną liczbę posiłków (M). Mechanizm ograniczenia liczby jedzących oraz losowe ponawianie prób zapobiegają blokadzie systemu i zagłodzeniu filozofów.
 
 ## Zalety rozwiązania
-- **Brak zakleszczenia** – dzięki ograniczeniu liczby jedzących w danym czasie
-- **Brak zagłodzenia** – filozofowie losowo ponawiają próby jedzenia, zwiększając szanse na sprawiedliwy dostęp do zasobów
-- **Efektywność** – operacje na zmiennych atomowych zapewniają niski narzut synchronizacji
+- **Brak zakleszczenia** – ograniczenie liczby jedzących w danym czasie minimalizuje ryzyko blokady
+- **Brak zagłodzenia** – losowe opóźnienia w ponawianiu prób zapewniają równe szanse na zdobycie zasobów
+- **Efektywność** – wykorzystanie zmiennych atomowych zapewnia szybkie i bezpieczne operacje synchronizacyjne
 
-To rozwiązanie pozwala na efektywne zarządzanie zasobami w systemach wielowątkowych, unikając problemów typowych dla klasycznego podejścia do problemu jedzących filozofów.
+To podejście umożliwa efektywne zarządzanie zasobami w systemach wielowątkowych, minimalizując ryzyko typowych problemów synchronizacyjnych.
 
+---
 
 # Problem jedzących filozofów - Wątki oraz momenty kluczowe
 
 ### Wątki w implementacji
-W programie każdy filozof jest reprezentowany jako osobny wątek. Wątki te są tworzone w funkcji `start_dining`, a następnie uruchamiane jednocześnie:
+Każdy filozof jest reprezentowany jako osobny wątek. Wątki są tworzone w funkcji `start_dining` i uruchamiane jednocześnie:
 
 ```cpp
 for (int i = 0; i < num_philosophers; i++) {
@@ -80,14 +83,13 @@ for (int i = 0; i < num_philosophers; i++) {
 }
 ```
 
-Każdy wątek wykonuje swoją logikę w funkcji `philosopher`, gdzie symulowane są stany myślenia i jedzenia.
+Każdy wątek wykonuje logikę w funkcji `philosopher`, gdzie symulowane są stany myślenia i jedzenia.
 
 ### Sekcje krytyczne wątków
-Program wykorzystuje mechanizmy synchronizacji do ochrony zasobów współdzielonych (widelców) i zapobiegania zakleszczeniom. Kluczowe momenty w działaniu programu:
+Program wykorzystuje mechanizmy synchronizacji do ochrony współdzielonych zasobów (widelców) i unikania zakleszczenia. Najważniejsze momenty w działaniu programu to:
 
 1. **Oczekiwanie na możliwość jedzenia**
-    - Aby zapobiec zakleszczeniom, wprowadzono ograniczenie maksymalnej liczby jedzących filozofów w danym momencie do `N/2`.
-    - Jeśli liczba aktywnie jedzących filozofów osiągnie ten próg, inne wątki muszą poczekać.
+   - Jeśli liczba aktywnie jedzących filozofów osiągnie `N/2`, inne wątki muszą poczekać.
 
    ```cpp
    while (eating_count.load() >= num_philosophers / 2) {
@@ -96,18 +98,21 @@ Program wykorzystuje mechanizmy synchronizacji do ochrony zasobów współdzielo
    ```
 
 2. **Próba podniesienia obu widelców**
-    - Każdy filozof najpierw próbuje podnieść lewy i prawy widelec jednocześnie. Jeśli uda się podnieść oba, może jeść.
-    - Operacja `exchange(true)` na zmiennych atomowych zapewnia, że tylko jeden wątek na raz może przejąć dany widelec.
+   - Filozof podnosi widelce w losowej kolejności. Jeśli nie uda mu się zdobyć obu, zwalnia zasoby i czeka losowy czas przed ponowną próbą.
 
    ```cpp
-   if (!forks[left_fork].exchange(true) && !forks[right_fork].exchange(true)) {
-       eating_count.fetch_add(1);
-       eat(id);
-       bites_taken++;
+   bool reverse_order = (generator() % 2 == 0);
+   int first_fork = reverse_order ? right_fork : left_fork;
+
+   unique_lock<mutex> first_lock(forks[first_fork], try_to_lock);
+   if (!first_lock.owns_lock()) continue;
+
+   unique_lock<mutex> second_lock(forks[second_fork], try_to_lock);
+   if (!second_lock.owns_lock()) continue;
    ```
 
 3. **Zwalnianie zasobów po jedzeniu**
-    - Po zakończeniu jedzenia filozof odkłada widelce i zmniejsza licznik jedzących, aby inni mogli zacząć spożywanie posiłku.
+   - Po zakończeniu jedzenia filozof odkłada widelce i zmniejsza licznik jedzących, umożliwiając innym rozpoczęcie jedzenia.
 
    ```cpp
    forks[left_fork].store(false);
@@ -116,12 +121,14 @@ Program wykorzystuje mechanizmy synchronizacji do ochrony zasobów współdzielo
    ```
 
 4. **Obsługa sytuacji, gdy nie uda się zdobyć obu widelców**
-    - Jeśli filozofowi nie uda się podnieść obu widelców, zwalnia zajęte zasoby i czeka losowy czas przed ponowną próbą.
+   - Jeśli filozof nie zdobył obu widelców, zwalnia zasoby i czeka losowy czas przed ponowną próbą.
 
    ```cpp
    forks[left_fork].store(false);
    forks[right_fork].store(false);
    this_thread::sleep_for(chrono::milliseconds(delay_dist(generator)));
    ```
+
+
 
 
